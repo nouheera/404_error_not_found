@@ -1,0 +1,1558 @@
+import 'package:flutter/material.dart';
+
+class AIChatBoxPage extends StatelessWidget {
+  const AIChatBoxPage({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          onPressed: () {
+            Navigator.pop(context); // Navigate back
+          },
+        ),
+        title: const Text(
+          "AI Chat Box",
+          style: TextStyle(
+            color: Colors.black,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        centerTitle: true,
+        backgroundColor: Colors.orange.shade200,
+        elevation: 0,
+      ),
+      body: Column(
+        children: [
+          const Expanded(
+            child: Center(
+              child: Text(
+                "Chat with AI here...",
+                style: TextStyle(
+                  color: Colors.grey,
+                  fontSize: 16,
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10),
+            color: Colors.white,
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    decoration: InputDecoration(
+                      hintText: "Hi! Type Here...",
+                      border: InputBorder.none,
+                      hintStyle: TextStyle(
+                        color: Colors.grey.shade500,
+                      ),
+                    ),
+                  ),
+                ),
+                IconButton(
+                  onPressed: () {
+                    // Add send button functionality here
+                  },
+                  icon: const Icon(
+                    Icons.send,
+                    color: Colors.black,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+      backgroundColor: Colors.orange.shade100,
+    );
+  }
+}
+
+
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:google_sign_in/google_sign_in.dart';
+
+class AuthService {
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final GoogleSignIn _googleSignIn = GoogleSignIn();
+
+  /// Sign in with Google
+  Future<User?> signInWithGoogle() async {
+    try {
+      // Trigger the Google sign-in flow
+      final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
+
+      if (googleUser == null) {
+        // User canceled the sign-in process
+        print("Google sign-in canceled");
+        return null;
+      }
+
+      // Obtain the authentication details
+      final GoogleSignInAuthentication googleAuth =
+          await googleUser.authentication;
+
+      // Create a credential for Firebase authentication
+      final OAuthCredential credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
+
+      // Authenticate with Firebase
+      final UserCredential userCredential =
+          await FirebaseAuth.instance.signInWithCredential(credential);
+
+      // Return the user
+      return userCredential.user;
+    } catch (e) {
+      // Print the error for debugging
+      print("Error during Google sign-in: $e");
+      return null;
+    }
+  }
+
+  /// Sign out (from both Firebase and Google)
+  Future<void> signOut() async {
+    try {
+      // Sign out from Firebase
+      await _auth.signOut();
+
+      // Disconnect from Google
+      await _googleSignIn.signOut();
+    } catch (e) {
+      print("Error during sign-out: $e");
+    }
+  }
+
+  /// Get current user
+  User? get currentUser => _auth.currentUser;
+}
+
+
+
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
+import 'FirstPage.dart';
+import 'SecondPage.dart';
+
+class AuthPage extends StatelessWidget {
+  const AuthPage({super.key});
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: StreamBuilder<User?>(
+        stream: FirebaseAuth.instance.authStateChanges(),
+        builder: (context, snapshot) {
+          // user is logged in
+          if (snapshot.hasData) {
+            return SecondPage();
+          }
+
+          // user is NOT logged in
+          else {
+            return LoginPage();
+          }
+        },
+      ),
+    );
+  }
+}
+
+
+
+import 'package:flutter/material.dart';
+
+class DiaryPage extends StatelessWidget {
+  const DiaryPage({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          onPressed: () {
+            Navigator.pop(context); // Navigate back
+          },
+        ),
+        title: const Text(
+          "Dairy",
+          style: TextStyle(
+            color: Colors.black,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        centerTitle: true,
+        backgroundColor: Colors.orange.shade200,
+        elevation: 0,
+      ),
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          const SizedBox(height: 20),
+          const Text(
+            "Save moments of your life",
+            style: TextStyle(
+              fontSize: 16,
+              fontStyle: FontStyle.italic,
+              color: Colors.black54,
+            ),
+          ),
+          const SizedBox(height: 20),
+          GridView.builder(
+            shrinkWrap: true,
+            padding: const EdgeInsets.all(16),
+            itemCount:
+                3, // Adjust based on how many diary entries are displayed
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              crossAxisSpacing: 16,
+              mainAxisSpacing: 16,
+            ),
+            itemBuilder: (context, index) {
+              if (index == 2) {
+                // Add button at the last position
+                return GestureDetector(
+                  onTap: () {
+                    // Handle add diary entry
+                  },
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.orange.shade100,
+                      borderRadius: BorderRadius.circular(10),
+                      border:
+                          Border.all(color: Colors.orange.shade300, width: 2),
+                    ),
+                    child: const Center(
+                      child: Icon(Icons.add, size: 50, color: Colors.orange),
+                    ),
+                  ),
+                );
+              }
+              return Container(
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade200,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              );
+            },
+          ),
+          const Spacer(),
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Align(
+              alignment: Alignment.bottomRight,
+              child: Image.asset(
+                'assets/quill.png', // Replace with your image asset path
+                height: 100,
+              ),
+            ),
+          ),
+        ],
+      ),
+      backgroundColor: Colors.orange.shade100,
+    );
+  }
+}
+
+
+import 'package:flutter/material.dart';
+import 'ProfilePage.dart';
+import 'SecondPage.dart';
+import 'MoodSuggest.dart';
+import 'Reportpage.dart';
+
+class EmergencyPage extends StatelessWidget {
+  const EmergencyPage({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text("Emergency Page"),
+      ),
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              const SizedBox(height: 20),
+              CircleAvatar(
+                radius: 50,
+                backgroundColor: Colors.red.shade100,
+                child: Icon(
+                  Icons.notifications_active,
+                  size: 50,
+                  color: Colors.red.shade700,
+                ),
+              ),
+              const SizedBox(height: 10),
+              const Text(
+                "Emergency Call",
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 15),
+              const Text(
+                "Available Volunteers",
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 10),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: List.generate(4, (index) {
+                  return CircleAvatar(
+                    radius: 30,
+                    backgroundColor: Colors.orange.shade100,
+                    child: Icon(
+                      Icons.person,
+                      size: 30,
+                      color: Colors.orange.shade700,
+                    ),
+                  );
+                }),
+              ),
+              const SizedBox(height: 20),
+              GridView.count(
+                crossAxisCount: 2,
+                shrinkWrap: true,
+                crossAxisSpacing: 16,
+                mainAxisSpacing: 16,
+                physics: const NeverScrollableScrollPhysics(),
+                children: [
+                  _buildActionButton(
+                    context: context,
+                    icon: Icons.psychology,
+                    label: "Call Volunteers",
+                    onTap: () {},
+                  ),
+                  _buildActionButton(
+                    context: context,
+                    icon: Icons.school,
+                    label: "Contact Authorities",
+                    onTap: () {},
+                  ),
+                  _buildActionButton(
+                    context: context,
+                    icon: Icons.people,
+                    label: "Call Friends",
+                    onTap: () {},
+                  ),
+                  _buildActionButton(
+                    context: context,
+                    icon: Icons.camera,
+                    label: "Record Video and Audio",
+                    onTap: () {},
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+      bottomNavigationBar: BottomAppBar(
+        shape: const CircularNotchedRectangle(),
+        color: Colors.orange.shade100, // Color of the BottomAppBar
+        notchMargin: 8.0,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            IconButton(
+              icon: Icon(
+                Icons.home,
+                size: 30,
+              ),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const SecondPage()),
+                );
+              },
+            ),
+            IconButton(
+              icon: Icon(
+                Icons.call,
+                size: 30,
+              ),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => const EmergencyPage()),
+                );
+              },
+            ),
+            SizedBox(
+              height: MediaQuery.of(context).size.height *
+                  0.25, // 10% of screen height
+            ), // Space for the FAB
+            IconButton(
+              icon: Icon(
+                Icons.gamepad,
+                size: 30,
+              ),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => const MoodSuggestionPage()),
+                );
+              },
+            ),
+            IconButton(
+              icon: Icon(
+                Icons.person,
+                size: 30,
+              ),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => ProfilePage()),
+                );
+              },
+            ),
+          ],
+        ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const ReportPage()),
+          );
+        },
+        backgroundColor: Color(0xffff2200),
+        child: const Icon(
+          Icons.report,
+          size: 50,
+        ),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+    );
+  }
+}
+
+Widget _buildActionButton({
+  required BuildContext context,
+  required IconData icon,
+  required String label,
+  required VoidCallback onTap,
+}) {
+  return GestureDetector(
+    onTap: onTap,
+    child: Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.orange[200],
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(icon, size: 30, color: Color(0xffff1100)),
+          const SizedBox(height: 10),
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+
+
+
+// File generated by FlutLab.
+import 'package:firebase_core/firebase_core.dart' show FirebaseOptions;
+import 'package:flutter/foundation.dart'
+    show defaultTargetPlatform, kIsWeb, TargetPlatform;
+
+/// Default [FirebaseOptions] for use with your Firebase apps.
+///
+/// Example:
+/// ```dart
+/// import 'firebase_options.dart';
+/// // ...
+/// await Firebase.initializeApp(
+///   options: DefaultFirebaseOptions.currentPlatform,
+/// );
+/// ```
+class DefaultFirebaseOptions {
+  static FirebaseOptions get currentPlatform {
+    if (kIsWeb) {
+      throw UnsupportedError(
+        'DefaultFirebaseOptions have not been configured for web - '
+        'try to add using FlutLab Firebase Configuration',
+      );
+    }
+    switch (defaultTargetPlatform) {
+      case TargetPlatform.android:
+        return android;
+      case TargetPlatform.iOS:
+        throw UnsupportedError(
+          'DefaultFirebaseOptions have not been configured for iOS - '
+          'try to add using FlutLab Firebase Configuration',
+        );
+      case TargetPlatform.macOS:
+        throw UnsupportedError(
+          'DefaultFirebaseOptions have not been configured for macos - '
+          'it not supported by FlutLab yet, but you can add it manually',
+        );
+      case TargetPlatform.windows:
+        throw UnsupportedError(
+          'DefaultFirebaseOptions have not been configured for windows - '
+          'it not supported by FlutLab yet, but you can add it manually',
+        );
+      case TargetPlatform.linux:
+        throw UnsupportedError(
+          'DefaultFirebaseOptions have not been configured for linux - '
+          'it not supported by FlutLab yet, but you can add it manually',
+        );
+      default:
+        throw UnsupportedError(
+          'DefaultFirebaseOptions are not supported for this platform.',
+        );
+    }
+  }
+
+  static const FirebaseOptions android = FirebaseOptions(
+    apiKey: 'AIzaSyAYDmUgjxlHmL07MIB9CpGwRplvmcuL4Pg',
+    appId: '1:931838427824:android:2f65501e49d3f056667175',
+    messagingSenderId: '931838427824',
+    projectId: 'women-safety-23930',
+    storageBucket: 'women-safety-23930.firebasestorage.app'
+  );
+}
+
+
+
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
+import '/components/my_button.dart'; // Ensure this file is updated with the correct MyButton code
+import '/components/my_textfield.dart';
+import '/components/square_tile.dart';
+import 'auth_google.dart';
+
+class LoginPage extends StatefulWidget {
+  LoginPage({super.key});
+
+  @override
+  State<LoginPage> createState() => _LoginPageState();
+}
+
+class _LoginPageState extends State<LoginPage> {
+  // text editing controllers
+  final emailController = TextEditingController();
+  final passwordController = TextEditingController();
+
+  // sign user in method
+  void signUserIn() async {
+    // show loading circle
+    showDialog(
+      context: context,
+      builder: (context) {
+        return const Center(
+          child: CircularProgressIndicator(),
+        );
+      },
+    );
+
+    // try sign in
+    try {
+      await FirebaseAuth.instance.signInWithEmailAndPassword(
+        email: emailController.text,
+        password: passwordController.text,
+      );
+      // pop the loading circle
+      Navigator.pop(context);
+    } on FirebaseAuthException catch (e) {
+      // pop the loading circle
+      Navigator.pop(context);
+      // WRONG EMAIL
+      if (e.code == 'user-not-found') {
+        // show error to user
+        wrongEmailMessage();
+      }
+
+      // WRONG PASSWORD
+      else if (e.code == 'wrong-password') {
+        // show error to user
+        wrongPasswordMessage();
+      }
+    }
+  }
+
+  // wrong email message popup
+  void wrongEmailMessage() {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return const AlertDialog(
+          backgroundColor: Color(0xFFF3CAAC),
+          title: Center(
+            child: Text(
+              'Incorrect Email',
+              style: TextStyle(color: Colors.black),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  // wrong password message popup
+  void wrongPasswordMessage() {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return const AlertDialog(
+          backgroundColor: Color(0xFFF3CAAC),
+          title: Center(
+            child: Text(
+              'Incorrect Password',
+              style: TextStyle(color: Colors.black),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFFF3CAAC),
+      body: SafeArea(
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const SizedBox(height: 50),
+
+              // logo
+              const Icon(
+                Icons.lock,
+                size: 100,
+                color: Colors.black,
+              ),
+
+              const SizedBox(height: 50),
+
+              // welcome back, you've been missed!
+              Text(
+                'Welcome back you\'ve been missed!',
+                style: TextStyle(
+                  color: Colors.black,
+                  fontSize: 16,
+                  fontFamily: 'Roboto',
+                ),
+              ),
+
+              const SizedBox(height: 25),
+
+              // email textfield
+              MyTextField(
+                controller: emailController,
+                hintText: 'Email',
+                obscureText: false,
+              ),
+
+              const SizedBox(height: 10),
+
+              // password textfield
+              MyTextField(
+                controller: passwordController,
+                hintText: 'Password',
+                obscureText: true,
+              ),
+
+              const SizedBox(height: 10),
+
+              // forgot password?
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 25.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    Text(
+                      'Forgot Password?',
+                      style: TextStyle(color: Colors.black54),
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 25),
+
+              // sign in button
+              MyButton(
+                onTap: signUserIn,
+                backgroundColor: const Color(0xFFE17224),
+                textstyle: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontFamily: 'Roboto',
+                ),
+              ),
+
+              const SizedBox(height: 50),
+
+              // or continue with
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 25.0),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Divider(
+                        thickness: 0.5,
+                        color: Colors.black54,
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 10.0),
+                      child: Text(
+                        'Or continue with',
+                        style: TextStyle(color: Colors.black),
+                      ),
+                    ),
+                    Expanded(
+                      child: Divider(
+                        thickness: 0.5,
+                        color: Colors.black54,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 50),
+
+              // google + apple sign in buttons
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  // google button
+                  Center(
+                    child: TextButton.icon(
+                      icon: const Icon(Icons.login, color: Colors.black),
+                      label: const Text(
+                        "Sign in with Google",
+                        style: TextStyle(color: Colors.black),
+                      ),
+                      onPressed: () async {
+                        final AuthService _authService = AuthService();
+                        final user = await _authService.signInWithGoogle();
+                        if (user != null) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                                content: Text("Welcome ${user.displayName}!")),
+                          );
+                          // Navigate to the home screen or handle logged-in user
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text("Sign-in failed")),
+                          );
+                        }
+                      },
+                    ),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 50),
+
+              // not a member? register now
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    'Not a member?',
+                    style: TextStyle(color: Colors.black),
+                  ),
+                  const SizedBox(width: 4),
+                  const Text(
+                    'Register now',
+                    style: TextStyle(
+                      color: Colors.blue,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              )
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// MyButton widget definition
+class MyButton extends StatelessWidget {
+  final VoidCallback onTap;
+  final Color backgroundColor;
+  final TextStyle textstyle;
+
+  const MyButton({
+    required this.onTap,
+    required this.backgroundColor,
+    required this.textstyle,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 32),
+        decoration: BoxDecoration(
+          color: backgroundColor,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Text(
+          'Sign In', // You can replace this with dynamic text if needed
+          style: textstyle,
+        ),
+      ),
+    );
+  }
+}
+
+
+
+import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
+import 'auth_page.dart';
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  if (kIsWeb) {
+    await Firebase.initializeApp(
+        options: FirebaseOptions(
+            apiKey: "AIzaSyAj-31aNWwPQNNvH6n0dmvznVkmuuU3SdQ",
+            authDomain: "women-safety-23930.firebaseapp.com",
+            projectId: "women-safety-23930",
+            storageBucket: "women-safety-23930.firebasestorage.app",
+            messagingSenderId: "931838427824",
+            appId: "1:931838427824:web:23c442fbdc397177667175"));
+  } else {
+    await Firebase.initializeApp();
+  }
+  runApp(const MyApp());
+}
+
+class MyApp extends StatelessWidget {
+  const MyApp({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      home: AuthPage(),
+    );
+  }
+}
+
+
+
+
+import 'package:flutter/material.dart';
+import 'AiAssistant.dart';
+import 'EmergencyPage.dart';
+import 'ProfilePage.dart';
+import 'WavePainter.dart';
+import 'Reportpage.dart';
+import 'Therapist.dart';
+import 'MoodSuggest.dart';
+import 'Diary.dart';
+import 'SecondPage.dart';
+
+class MoodSuggestionPage extends StatelessWidget {
+  const MoodSuggestionPage({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text("Don't worry...I'm here"),
+        centerTitle: true,
+        backgroundColor: Colors.orange.shade300,
+        elevation: 0,
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Container(
+          color: const Color(0xFFF3CAAC),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 10),
+              Expanded(
+                child: GridView.count(
+                  crossAxisCount: 2,
+                  crossAxisSpacing: 10,
+                  mainAxisSpacing: 10,
+                  children: [
+                    // Wrap Image with InkWell to detect tap for "Movie"
+                    InkWell(
+                      onTap: () {
+                        // Navigate to AiAssistant Page when tapped
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => AIChatBoxPage(),
+                          ),
+                        );
+                      },
+                      child: Image.asset(
+                        'lib/images/movie.png',
+                        width: 200,
+                        height: 200,
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.only(top: 75.0),
+                      child: (Text(
+                        'Movie',
+                        style: TextStyle(
+                          fontSize: 20,
+                          color: Colors.black,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        textAlign: TextAlign.center,
+                      )),
+                    ),
+                    // Wrap Image with InkWell to detect tap for "Books"
+                    InkWell(
+                      onTap: () {
+                        // Navigate to AiAssistant Page when tapped
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => AIChatBoxPage(),
+                          ),
+                        );
+                      },
+                      child: Image.asset(
+                        'lib/images/book.png',
+                        width: 200,
+                        height: 200,
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.only(top: 75.0),
+                      child: (Text(
+                        'Books',
+                        style: TextStyle(
+                          fontSize: 20,
+                          color: Colors.black,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        textAlign: TextAlign.center,
+                      )),
+                    ),
+                    Image.asset(
+                      'lib/images/game.png',
+                      width: 200,
+                      height: 200,
+                      fit: BoxFit.cover,
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.only(top: 75.0),
+                      child: (Text(
+                        'Games',
+                        style: TextStyle(
+                          fontSize: 20,
+                          color: Colors.black,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        textAlign: TextAlign.center,
+                      )),
+                    ),
+                    Image.asset(
+                      'lib/images/pa.png',
+                      width: 200,
+                      height: 200,
+                      fit: BoxFit.cover,
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.only(top: 75.0),
+                      child: (Text(
+                        'Physical activity',
+                        style: TextStyle(
+                          fontSize: 20,
+                          color: Colors.black,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        textAlign: TextAlign.center,
+                      )),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+      bottomNavigationBar: BottomAppBar(
+        shape: const CircularNotchedRectangle(),
+        color: Colors.orange.shade100, // Color of the BottomAppBar
+        notchMargin: 8.0,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            IconButton(
+              icon: Icon(
+                Icons.home,
+                size: 30,
+              ),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const SecondPage()),
+                );
+              },
+            ),
+            IconButton(
+              icon: Icon(
+                Icons.call,
+                size: 30,
+              ),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => const EmergencyPage()),
+                );
+              },
+            ),
+            SizedBox(
+              height: MediaQuery.of(context).size.height *
+                  0.25, // 10% of screen height
+            ), // Space for the FAB
+            IconButton(
+              icon: Icon(
+                Icons.gamepad,
+                size: 30,
+              ),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => const MoodSuggestionPage()),
+                );
+              },
+            ),
+            IconButton(
+              icon: Icon(
+                Icons.person,
+                size: 30,
+              ),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => ProfilePage()),
+                );
+              },
+            ),
+          ],
+        ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const ReportPage()),
+          );
+        },
+        backgroundColor: Color(0xffff2200),
+        child: const Icon(
+          Icons.report,
+          size: 50,
+        ),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+    );
+  }
+
+  Widget buildMoodOption(String title, String imagePath) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.grey.shade200,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Expanded(
+            flex: 4,
+            child: Image.asset(
+              imagePath,
+              fit: BoxFit.cover,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Expanded(
+            flex: 1,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8.0),
+              child: Text(
+                title,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+
+
+import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:helloworld/components/my_button.dart';
+
+class ProfilePage extends StatelessWidget {
+  ProfilePage({Key? key}) : super(key: key);
+  final user = FirebaseAuth.instance.currentUser!;
+
+  // sign user out method
+  void signUserOut() {
+    FirebaseAuth.instance.signOut();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text("Profile"),
+        backgroundColor: Color(0xFFF3CAAC),
+        centerTitle: true,
+        elevation: 0,
+      ),
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(vertical: 20),
+            decoration: const BoxDecoration(
+              color: Color(0xFFF3CAAC),
+              borderRadius: BorderRadius.only(
+                bottomLeft: Radius.circular(20),
+                bottomRight: Radius.circular(20),
+              ),
+            ),
+            child: Column(
+              children: [
+                const CircleAvatar(
+                  radius: 50,
+                  backgroundImage: NetworkImage(
+                    'https://via.placeholder.com/150', // Replace with a valid image URL
+                  ),
+                ),
+                const SizedBox(height: 10),
+                const Text(
+                  "Mohammed Nouheera",
+                  style: TextStyle(
+                    color: Colors.black,
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 15),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [],
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 20),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                ProfileInfoRow(
+                  icon: Icons.email,
+                  label: "Email",
+                  value: "n200680@rguktn.ac.in",
+                ),
+                const SizedBox(height: 15),
+                ProfileInfoRow(
+                  icon: Icons.phone,
+                  label: "Mobile",
+                  value: "6304330681",
+                ),
+                const SizedBox(height: 15),
+                ProfileInfoRow(
+                  icon: Icons.link,
+                  label: "ID Number",
+                  value: "N200680",
+                ),
+                const SizedBox(height: 15),
+                ProfileInfoRow(
+                  icon: Icons.web,
+                  label: "Help",
+                  value: "www.adminpage.com",
+                ),
+                const SizedBox(height: 15),
+                ProfileInfoRow(
+                  icon: Icons.facebook,
+                  label: "Contact Us",
+                  value: "040- 1942322",
+                ),
+                SizedBox(
+                  height: MediaQuery.of(context).size.height -
+                      650, // 10% of screen height
+                ),
+                AppBar(
+                  title: const Text(
+                    "Logout ",
+                    style: TextStyle(
+                      color: Colors.black,
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  backgroundColor: Color(0xFFF3CAAC),
+                  actions: [
+                    IconButton(
+                      onPressed: signUserOut,
+                      icon: Icon(Icons.logout),
+                    )
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class ProfileInfoRow extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String value;
+
+  const ProfileInfoRow({
+    Key? key,
+    required this.icon,
+    required this.label,
+    required this.value,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Icon(icon, color: Color(0xffff8a34), size: 28),
+        const SizedBox(width: 15),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              label,
+              style: const TextStyle(
+                color: Colors.grey,
+                fontSize: 14,
+              ),
+            ),
+            const SizedBox(height: 5),
+            Text(
+              value,
+              style: const TextStyle(
+                color: Colors.black,
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+
+
+import 'package:flutter/material.dart';
+import 'EmergencyPage.dart';
+import 'ProfilePage.dart';
+import 'WavePainter.dart';
+import 'Reportpage.dart';
+import 'Therapist.dart';
+import 'MoodSuggest.dart';
+import 'AiAssistant.dart';
+import 'Diary.dart';
+import 'SecondPage.dart';
+
+class ReportPage extends StatefulWidget {
+  const ReportPage({Key? key}) : super(key: key);
+
+  @override
+  _ReportPageState createState() => _ReportPageState();
+}
+
+class _ReportPageState extends State<ReportPage> {
+  String reportType = "Known"; // Default value for radio group
+  String? harassmentType; // Selected harassment type
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text("Report Your Problem Here!"),
+      ),
+      body: SingleChildScrollView(
+        child: Container(
+          color: const Color(0xFFF3CAAC), // Set background color
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  "How would you like to report your problem?",
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                Row(
+                  children: [
+                    Radio<String>(
+                      value: "Anonymous",
+                      groupValue: reportType,
+                      onChanged: (value) {
+                        setState(() {
+                          reportType = value!;
+                        });
+                      },
+                    ),
+                    const Text(
+                      "Anonymous",
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    Radio<String>(
+                      value: "Known",
+                      groupValue: reportType,
+                      onChanged: (value) {
+                        setState(() {
+                          reportType = value!;
+                        });
+                      },
+                    ),
+                    const Text("Known"),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                const Text(
+                  "Type of Harassment",
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+                DropdownButtonFormField<String>(
+                  items: <String>[
+                    'Verbal Abuse',
+                    'Sexual Harassment',
+                    'Bullying',
+                    'Stalking',
+                    'Cyber Harassment',
+                    'Discrimination',
+                    'Abuse of Authority'
+                  ].map((String value) {
+                    return DropdownMenuItem<String>(
+                      value: value,
+                      child: Text(value),
+                    );
+                  }).toList(),
+                  onChanged: (String? newValue) {
+                    setState(() {
+                      harassmentType = newValue;
+                    });
+                  },
+                  decoration: const InputDecoration(
+                    filled: true,
+                    fillColor: Colors.white, // Set background color to white
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                const Text(
+                  "Location",
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+                TextField(
+                  decoration: const InputDecoration(
+                    filled: true,
+                    fillColor: Colors.white, // Set background color to white
+                    border: OutlineInputBorder(),
+                    hintText: "Enter location",
+                  ),
+                ),
+                const SizedBox(height: 20),
+                const Text(
+                  "Time",
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+                TextField(
+                  decoration: const InputDecoration(
+                    filled: true,
+                    fillColor: Colors.white, // Set background color to white
+                    border: OutlineInputBorder(),
+                    hintText: "Enter time",
+                  ),
+                ),
+                const SizedBox(height: 20),
+                const Text(
+                  "Description of Harassment",
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+                TextField(
+                  decoration: const InputDecoration(
+                    filled: true,
+                    fillColor: Colors.white, // Set background color to white
+                    border: OutlineInputBorder(),
+                    hintText: "Describe the harassment",
+                  ),
+                  maxLines: 4,
+                ),
+                const SizedBox(height: 20),
+                const Text(
+                  "Harasser Details",
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+                TextField(
+                  decoration: const InputDecoration(
+                    filled: true,
+                    fillColor: Colors.white, // Set background color to white
+                    border: OutlineInputBorder(),
+                    hintText: "Enter harasser details",
+                  ),
+                ),
+                const SizedBox(height: 20),
+                const Text(
+                  "Upload Documents Related to Harassment",
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    // Implement file upload functionality
+                  },
+                  child: const Text("Upload Documents"),
+                ),
+                const SizedBox(height: 30),
+                ElevatedButton(
+                  onPressed: () {
+                    // Handle form submission
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text("Report Submitted")),
+                    );
+                  },
+                  child: const Text("SUBMIT"),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+      bottomNavigationBar: BottomAppBar(
+        shape: const CircularNotchedRectangle(),
+        color: Colors.orange.shade100, // Color of the BottomAppBar
+        notchMargin: 8.0,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            IconButton(
+              icon: Icon(
+                Icons.home,
+                size: 30,
+              ),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const SecondPage()),
+                );
+              },
+            ),
+            IconButton(
+              icon: Icon(
+                Icons.call,
+                size: 30,
+              ),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => const EmergencyPage()),
+                );
+              },
+            ),
+            SizedBox(
+              height: MediaQuery.of(context).size.height *
+                  0.25, // 10% of screen height
+            ), // Space for the FAB
+            IconButton(
+              icon: Icon(
+                Icons.gamepad,
+                size: 30,
+              ),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => const MoodSuggestionPage()),
+                );
+              },
+            ),
+            IconButton(
+              icon: Icon(
+                Icons.person,
+                size: 30,
+              ),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => ProfilePage()),
+                );
+              },
+            ),
+          ],
+        ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const ReportPage()),
+          );
+        },
+        backgroundColor: Color(0xffff2200),
+        child: const Icon(
+          Icons.report,
+          size: 50,
+        ),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+    );
+  }
+}
